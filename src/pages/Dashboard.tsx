@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { LayoutDashboard, Users, Heart, DollarSign, TrendingUp, Settings } from "lucide-react";
-import StreamManager from "../components/StreamManager";
+import { StreamerView } from "../components/streaming/StreamerView";
 import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
 import { db, auth, handleFirestoreError, OperationType } from "../firebase";
 
@@ -73,7 +73,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Stream Manager Section */}
         <div className="lg:col-span-2 space-y-6">
-          <StreamManager />
+          <StreamerView streamerId={auth.currentUser?.uid || ""} />
 
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h3 className="text-xl font-bold">HISTORIQUE DES DONS</h3>

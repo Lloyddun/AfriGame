@@ -1,10 +1,9 @@
 {
-  "projectId": "investi-pro",
-  "appId": "1:1076527994246:web:aa9e049eafe0d926308807",
-  "apiKey": "AIzaSyBN3cd2SdleXBFbjAXhXZy677ohuQekZ8Y",
-  "authDomain": "investi-pro.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-d32bbb38-05cf-4efa-b8bb-28e37ba52ef2",
-  "storageBucket": "investi-pro.firebasestorage.app",
-  "messagingSenderId": "1076527994246",
-  "measurementId": ""
+  "apiKey": "AIzaSyDnJv5KxbykjHlOjed0CoRwc-HUcX2szZU",
+  "authDomain": "nexus-66cb5.firebaseapp.com",
+  "projectId": "nexus-66cb5",
+  "storageBucket": "nexus-66cb5.firebasestorage.app",
+  "messagingSenderId": "588647930113",
+  "appId": "1:588647930113:web:6ee536650025148de12300",
+  "firestoreDatabaseId": "(default)"
 }

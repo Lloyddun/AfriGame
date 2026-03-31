@@ -2,8 +2,6 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 
-import muxRoutes from "./routes/mux";
-
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -15,9 +13,6 @@ async function startServer() {
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "AfriGame API is running" });
   });
-
-  // Mux API Routes
-  app.use("/api/mux", muxRoutes);
 
   // Mock Payment Integration Endpoint
   app.post("/api/payments/mobile-money", (req, res) => {

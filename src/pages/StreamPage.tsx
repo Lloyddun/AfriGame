@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Heart, Share2, DollarSign, MessageSquare, Send, Smile, Users, ShieldAlert } from "lucide-react";
-import VideoPlayer from "../components/VideoPlayer";
+import { ViewerView } from "../components/streaming/ViewerView";
 import { collection, query, where, onSnapshot, orderBy, limit, addDoc, serverTimestamp, doc } from "firebase/firestore";
 import { db, auth, handleFirestoreError, OperationType } from "../firebase";
 
@@ -74,14 +74,7 @@ export default function StreamPage() {
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-6rem)]">
       {/* Video Player Section */}
       <div className="lg:col-span-3 flex flex-col gap-4 overflow-y-auto pr-2">
-        <VideoPlayer 
-          playbackId={stream.playbackId} 
-          metadata={{
-            video_id: stream.id,
-            video_title: stream.title,
-            viewer_user_id: auth.currentUser?.uid || "anonymous",
-          }}
-        />
+        <ViewerView streamerId={stream.streamerId} />
 
         <div className="bg-card border border-border p-6 rounded-2xl space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
