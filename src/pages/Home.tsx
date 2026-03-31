@@ -1,55 +1,85 @@
-import { Trophy, Users, Play, Gamepad2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trophy, Gamepad2, Play } from "lucide-react";
 import { Link } from "react-router-dom";
-
-const featuredStream = {
-  id: "featured-1",
-  streamer: "AbidjanGaming",
-  title: "FINALE TOURNOI FIFA 24 - ABIDJAN OPEN",
-  game: "FIFA 24",
-  viewers: "12.5k",
-  thumbnail: "https://picsum.photos/seed/fifa/1280/720",
-};
-
-const popularStreams = [
-  { id: "1", streamer: "NairobiLegend", title: "Road to Global Elite - CS2", game: "CS2", viewers: "3.2k", thumbnail: "https://picsum.photos/seed/cs2/400/225" },
-  { id: "2", streamer: "DakarQueen", title: "PUBG Mobile - Squad Wipe", game: "PUBG Mobile", viewers: "1.8k", thumbnail: "https://picsum.photos/seed/pubg/400/225" },
-  { id: "3", streamer: "JoburgPro", title: "Free Fire World Series Qualifiers", game: "Free Fire", viewers: "5.4k", thumbnail: "https://picsum.photos/seed/ff/400/225" },
-  { id: "4", streamer: "LagosGamer", title: "Mobile Legends: Bang Bang", game: "MLBB", viewers: "2.1k", thumbnail: "https://picsum.photos/seed/mlbb/400/225" },
-];
-
-const categories = [
-  { name: "FIFA 24", icon: Gamepad2, color: "bg-blue-500" },
-  { name: "PUBG Mobile", icon: Gamepad2, color: "bg-orange-500" },
-  { name: "Free Fire", icon: Gamepad2, color: "bg-red-500" },
-  { name: "Mobile Legends", icon: Gamepad2, color: "bg-purple-500" },
-  { name: "Call of Duty", icon: Gamepad2, color: "bg-green-500" },
-];
+import { collection, query, where, limit, onSnapshot, orderBy } from "firebase/firestore";
+import { db, handleFirestoreError, OperationType } from "../firebase";
 
 export default function Home() {
+  const [featuredStream, setFeaturedStream] = useState<any>(null);
+  const [popularStreams, setPopularStreams] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const streamsRef = collection(db, "streams");
+    
+    // Fetch Featured Stream (Live with most viewers)
+    const featuredQuery = query(streamsRef, where("isLive", "==", true), orderBy("viewers", "desc"), limit(1));
+    const unsubFeatured = onSnapshot(featuredQuery, (snapshot) => {
+      if (!snapshot.empty) {
+        setFeaturedStream({ id: snapshot.docs[0].id, ...snapshot.docs[0].data() });
+      } else {
+        setFeaturedStream(null);
+      }
+      setLoading(false);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, "streams"));
+
+    // Fetch Popular Streams
+    const popularQuery = query(streamsRef, where("isLive", "==", true), orderBy("viewers", "desc"), limit(8));
+    const unsubPopular = onSnapshot(popularQuery, (snapshot) => {
+      setPopularStreams(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => handleFirestoreError(error, OperationType.LIST, "streams"));
+
+    return () => {
+      unsubFeatured();
+      unsubPopular();
+    };
+  }, []);
+
+  const categories = [
+    { name: "FIFA 24", icon: Gamepad2, color: "bg-blue-500" },
+    { name: "PUBG Mobile", icon: Gamepad2, color: "bg-orange-500" },
+    { name: "Free Fire", icon: Gamepad2, color: "bg-red-500" },
+    { name: "Mobile Legends", icon: Gamepad2, color: "bg-purple-500" },
+    { name: "Call of Duty", icon: Gamepad2, color: "bg-green-500" },
+  ];
+
+  if (loading) return <div className="flex items-center justify-center h-64 text-gold font-bold">CHARGEMENT D'AFRIGAME...</div>;
+
   return (
     <div className="space-y-8">
       {/* Hero Section */}
-      <section className="relative aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden group">
-        <img src={featuredStream.thumbnail} alt={featuredStream.title} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="bg-crimson text-white text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                EN DIRECT
-              </span>
-              <span className="text-white/80 text-sm font-medium">{featuredStream.viewers} spectateurs</span>
+      {featuredStream ? (
+        <section className="relative aspect-video md:aspect-[21/9] rounded-2xl overflow-hidden group">
+          <img src={featuredStream.thumbnail || "https://picsum.photos/seed/afrigame/1280/720"} alt={featuredStream.title} className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+          <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="bg-crimson text-white text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                  EN DIRECT
+                </span>
+                <span className="text-white/80 text-sm font-medium">{featuredStream.viewers || 0} spectateurs</span>
+              </div>
+              <h1 className="text-2xl md:text-4xl font-bold text-white">{featuredStream.title}</h1>
+              <p className="text-gold font-bold">{featuredStream.streamerName} • {featuredStream.game}</p>
             </div>
-            <h1 className="text-2xl md:text-4xl font-bold text-white">{featuredStream.title}</h1>
-            <p className="text-gold font-bold">{featuredStream.streamer} • {featuredStream.game}</p>
+            <Link to={`/stream/${featuredStream.id}`} className="bg-gold text-background px-8 py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform glow-gold">
+              <Play className="w-5 h-5 fill-current" />
+              REGARDER MAINTENANT
+            </Link>
           </div>
-          <Link to={`/stream/${featuredStream.id}`} className="bg-gold text-background px-8 py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-105 transition-transform glow-gold">
-            <Play className="w-5 h-5 fill-current" />
-            REGARDER MAINTENANT
-          </Link>
-        </div>
-      </section>
+        </section>
+      ) : (
+        <section className="bg-card border border-border rounded-2xl p-12 text-center space-y-4">
+          <div className="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mx-auto">
+            <Play className="text-gold w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-bold">AUCUN STREAM EN VEDETTE</h2>
+          <p className="text-muted-foreground max-w-md mx-auto">Soyez le premier à lancer un live sur AfriGame et apparaissez ici !</p>
+          <Link to="/dashboard" className="inline-block bg-gold text-background px-8 py-3 rounded-full font-bold hover:opacity-90 transition-opacity">LANCER MON STREAM</Link>
+        </section>
+      )}
 
       {/* Categories */}
       <section>
@@ -72,7 +102,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Popular Streams */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold flex items-center gap-2">
@@ -81,25 +110,31 @@ export default function Home() {
           </h2>
           <Link to="/browse" className="text-gold text-sm font-bold hover:underline">Tout voir</Link>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popularStreams.map((stream) => (
-            <Link key={stream.id} to={`/stream/${stream.id}`} className="group space-y-3">
-              <div className="relative aspect-video rounded-xl overflow-hidden">
-                <img src={stream.thumbnail} alt={stream.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute top-2 left-2 bg-crimson text-white text-[10px] font-bold px-1.5 py-0.5 rounded">LIVE</div>
-                <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{stream.viewers} viewers</div>
-              </div>
-              <div className="flex gap-3">
-                <img src={`https://picsum.photos/seed/${stream.streamer}/100`} className="w-10 h-10 rounded-full border-2 border-border" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-sm truncate group-hover:text-gold transition-colors">{stream.title}</h3>
-                  <p className="text-xs text-muted-foreground">{stream.streamer}</p>
-                  <p className="text-xs text-gold font-medium">{stream.game}</p>
+        {popularStreams.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {popularStreams.map((stream) => (
+              <Link key={stream.id} to={`/stream/${stream.id}`} className="group space-y-3">
+                <div className="relative aspect-video rounded-xl overflow-hidden">
+                  <img src={stream.thumbnail || "https://picsum.photos/seed/stream/400/225"} alt={stream.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <div className="absolute top-2 left-2 bg-crimson text-white text-[10px] font-bold px-1.5 py-0.5 rounded">LIVE</div>
+                  <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{stream.viewers || 0} viewers</div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+                <div className="flex gap-3">
+                  <img src={`https://picsum.photos/seed/${stream.streamerId}/100`} className="w-10 h-10 rounded-full border-2 border-border" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm truncate group-hover:text-gold transition-colors">{stream.title}</h3>
+                    <p className="text-xs text-muted-foreground">{stream.streamerName}</p>
+                    <p className="text-xs text-gold font-medium">{stream.game}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-card border border-border p-8 rounded-xl text-center text-muted-foreground">
+            Aucun stream en direct pour le moment.
+          </div>
+        )}
       </section>
 
       {/* Tournaments */}

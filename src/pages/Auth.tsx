@@ -1,14 +1,97 @@
-import { useState } from "react";
-import { Mail, Lock, User, Globe, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Mail, Lock, User, Globe, ChevronRight, AlertCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signInWithPopup, 
+  GoogleAuthProvider,
+  updateProfile
+} from "firebase/auth";
+import { doc, setDoc, serverTimestamp, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [country, setCountry] = useState("Sénégal");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const countries = [
     "Sénégal", "Côte d'Ivoire", "Cameroun", "Nigéria", "Kenya", "Afrique du Sud", "RD Congo", "Gabon"
   ];
+
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await updateProfile(user, { displayName });
+
+        // Create user doc in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          displayName,
+          email,
+          country,
+          bio: "Passionné de gaming africain.",
+          followersCount: 0,
+          followingCount: 0,
+          badges: [],
+          isVerified: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setError("");
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Check if user doc exists
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) {
+        await setDoc(doc(db, "users", user.uid), {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          country: "Afrique",
+          bio: "Passionné de gaming africain.",
+          followersCount: 0,
+          followingCount: 0,
+          badges: [],
+          isVerified: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+      navigate("/");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto mt-12 space-y-8">
@@ -41,7 +124,14 @@ export default function Auth() {
           </button>
         </div>
 
-        <form className="space-y-4">
+        {error && (
+          <div className="bg-crimson/10 border border-crimson/20 text-crimson p-3 rounded-xl flex items-center gap-2 mb-6 text-sm">
+            <AlertCircle className="w-4 h-4" />
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleAuth} className="space-y-4">
           {!isLogin && (
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Pseudo</label>
@@ -49,6 +139,9 @@ export default function Auth() {
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   type="text"
+                  required
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Gamer_221"
                   className="w-full bg-background border border-border rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:border-gold"
                 />
@@ -62,6 +155,9 @@ export default function Auth() {
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="votre@email.com"
                 className="w-full bg-background border border-border rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:border-gold"
               />
@@ -74,6 +170,9 @@ export default function Auth() {
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full bg-background border border-border rounded-xl py-2.5 pl-10 pr-4 focus:outline-none focus:border-gold"
               />
@@ -98,9 +197,13 @@ export default function Auth() {
             </div>
           )}
 
-          <button className="w-full bg-gold text-background py-3 rounded-xl font-bold mt-4 hover:opacity-90 transition-opacity glow-gold flex items-center justify-center gap-2">
-            {isLogin ? "SE CONNECTER" : "CRÉER MON COMPTE"}
-            <ChevronRight className="w-5 h-5" />
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-gold text-background py-3 rounded-xl font-bold mt-4 hover:opacity-90 transition-opacity glow-gold flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {loading ? "CHARGEMENT..." : isLogin ? "SE CONNECTER" : "CRÉER MON COMPTE"}
+            {!loading && <ChevronRight className="w-5 h-5" />}
           </button>
         </form>
 
@@ -114,7 +217,11 @@ export default function Auth() {
             </div>
           </div>
 
-          <button className="w-full border border-border py-3 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-border transition-colors">
+          <button 
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full border border-border py-3 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-border transition-colors disabled:opacity-50"
+          >
             <img src="https://www.google.com/favicon.ico" className="w-5 h-5" />
             Google
           </button>

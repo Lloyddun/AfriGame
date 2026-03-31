@@ -25,6 +25,7 @@ export default function App() {
                 <Route path="/browse" element={<Browse />} />
                 <Route path="/stream/:id" element={<StreamPage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/profile/:id" element={<Profile />} />
                 <Route path="/tournaments" element={<Tournaments />} />
                 <Route path="/auth" element={<Auth />} />

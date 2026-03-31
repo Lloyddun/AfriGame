@@ -1,13 +1,46 @@
-import { LayoutDashboard, Users, Heart, DollarSign, TrendingUp, Key, Settings } from "lucide-react";
-
-const stats = [
-  { label: "Viewers Actuels", value: "1,243", change: "+12%", icon: Users, color: "text-blue-400" },
-  { label: "Nouveaux Followers", value: "450", change: "+5%", icon: Heart, color: "text-crimson" },
-  { label: "Revenus (Mars)", value: "125,000 FCFA", change: "+24%", icon: DollarSign, color: "text-emerald" },
-  { label: "Temps de Stream", value: "42h 15m", change: "+8%", icon: TrendingUp, color: "text-gold" },
-];
+import { useState, useEffect } from "react";
+import { LayoutDashboard, Users, Heart, DollarSign, TrendingUp, Settings } from "lucide-react";
+import StreamManager from "../components/StreamManager";
+import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
+import { db, auth, handleFirestoreError, OperationType } from "../firebase";
 
 export default function Dashboard() {
+  const [stats, setStats] = useState([
+    { label: "Viewers Actuels", value: "0", change: "0%", icon: Users, color: "text-blue-400" },
+    { label: "Nouveaux Followers", value: "0", change: "0%", icon: Heart, color: "text-crimson" },
+    { label: "Revenus (Mois)", value: "0 FCFA", change: "0%", icon: DollarSign, color: "text-emerald" },
+    { label: "Temps de Stream", value: "0h 0m", change: "0%", icon: TrendingUp, color: "text-gold" },
+  ]);
+  const [donations, setDonations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const donationsRef = collection(db, "donations");
+    const q = query(
+      donationsRef, 
+      where("toStreamerId", "==", auth.currentUser.uid), 
+      orderBy("timestamp", "desc"),
+      limit(10)
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+      setDonations(docs);
+      
+      // Update stats based on real data
+      const totalRevenue = docs.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+      setStats(prev => prev.map(s => {
+        if (s.label === "Revenus (Mois)") return { ...s, value: `${totalRevenue.toLocaleString()} FCFA` };
+        return s;
+      }));
+      setLoading(false);
+    }, (error) => handleFirestoreError(error, OperationType.LIST, "donations"));
+
+    return () => unsub();
+  }, []);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -18,8 +51,8 @@ export default function Dashboard() {
           </h1>
           <p className="text-muted-foreground">Gérez votre chaîne et suivez vos performances.</p>
         </div>
-        <button className="bg-crimson text-white px-6 py-2 rounded-full font-bold hover:opacity-90 transition-opacity glow-crimson">
-          LANCER LE LIVE
+        <button className="bg-crimson text-white px-6 py-2 rounded-full font-bold hover:opacity-90 transition-opacity glow-crimson uppercase">
+          Lancer le Live
         </button>
       </div>
 
@@ -38,71 +71,37 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Stream Key Section */}
+        {/* Stream Manager Section */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              <Key className="text-gold w-5 h-5" />
-              CONFIGURATION DU STREAM
-            </h3>
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-muted-foreground uppercase">Serveur RTMP</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value="rtmp://stream.afrigame.com/live"
-                    className="flex-1 bg-background border border-border rounded-xl py-2 px-4 text-sm focus:outline-none"
-                  />
-                  <button className="bg-border px-4 py-2 rounded-xl text-xs font-bold hover:bg-border/80 transition-colors">Copier</button>
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-muted-foreground uppercase">Clé de stream</label>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    readOnly
-                    value="live_542198754_afri_xX99Zz"
-                    className="flex-1 bg-background border border-border rounded-xl py-2 px-4 text-sm focus:outline-none"
-                  />
-                  <button className="bg-border px-4 py-2 rounded-xl text-xs font-bold hover:bg-border/80 transition-colors">Copier</button>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gold/10 border border-gold/20 p-4 rounded-xl">
-              <p className="text-xs text-gold leading-relaxed">
-                <strong>Conseil :</strong> Utilisez OBS Studio avec le profil "AfriGame Mobile" pour une meilleure stabilité sur les connexions instables.
-              </p>
-            </div>
-          </div>
+          <StreamManager />
 
           <div className="bg-card border border-border rounded-2xl p-6 space-y-4">
             <h3 className="text-xl font-bold">HISTORIQUE DES DONS</h3>
-            <div className="space-y-4">
-              {[
-                { user: "Moussa_Gamer", amount: "5,000 FCFA", method: "Orange Money", date: "Il y a 2h" },
-                { user: "Fatou_MLBB", amount: "2,500 FCFA", method: "Wave", date: "Il y a 5h" },
-                { user: "Koffi_Pro", amount: "10,000 FCFA", method: "MTN Mobile Money", date: "Hier" },
-              ].map((don, i) => (
-                <div key={i} className="flex items-center justify-between p-3 hover:bg-border/50 rounded-xl transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald/20 text-emerald rounded-full flex items-center justify-center font-bold">
-                      {don.user[0]}
+            {donations.length > 0 ? (
+              <div className="space-y-4">
+                {donations.map((don) => (
+                  <div key={don.id} className="flex items-center justify-between p-3 hover:bg-border/50 rounded-xl transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-emerald/20 text-emerald rounded-full flex items-center justify-center font-bold">
+                        {don.fromUserName?.[0] || "?"}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold">{don.fromUserName}</p>
+                        <p className="text-xs text-muted-foreground">{don.provider}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold">{don.user}</p>
-                      <p className="text-xs text-muted-foreground">{don.method}</p>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-emerald">{don.amount} {don.currency}</p>
+                      <p className="text-[10px] text-muted-foreground">{new Date(don.timestamp).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-emerald">{don.amount}</p>
-                    <p className="text-[10px] text-muted-foreground">{don.date}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground text-sm">
+                Aucun don reçu pour le moment.
+              </div>
+            )}
           </div>
         </div>
 
