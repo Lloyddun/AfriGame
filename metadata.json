@@ -1,0 +1,9 @@
+{
+  "name": "AfriGame",
+  "description": "Plateforme de streaming gaming optimisée pour l'Afrique avec monétisation Mobile Money et tournois intégrés.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

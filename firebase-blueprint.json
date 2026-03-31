@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Utilisateur de la plateforme AfriGame",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "country": { "type": "string" },
+        "bio": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "streamer", "admin"] },
+        "followersCount": { "type": "number" },
+        "followingCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "email"]
+    },
+    "Stream": {
+      "title": "Stream",
+      "description": "Session de streaming en direct ou replay",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "streamerId": { "type": "string" },
+        "streamerName": { "type": "string" },
+        "title": { "type": "string" },
+        "game": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "viewers": { "type": "number" },
+        "isLive": { "type": "boolean" },
+        "language": { "type": "string" },
+        "country": { "type": "string" },
+        "startedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "streamerId", "title", "game"]
+    },
+    "Tournament": {
+      "title": "Tournament",
+      "description": "Compétition Esports",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "game": { "type": "string" },
+        "prizePool": { "type": "string" },
+        "entryFee": { "type": "string" },
+        "startDate": { "type": "string", "format": "date-time" },
+        "region": { "type": "string" },
+        "maxPlayers": { "type": "number" },
+        "currentPlayers": { "type": "number" },
+        "status": { "type": "string", "enum": ["open", "ongoing", "completed"] }
+      },
+      "required": ["id", "title", "game", "prizePool"]
+    },
+    "Donation": {
+      "title": "Donation",
+      "description": "Soutien financier via Mobile Money",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fromUserId": { "type": "string" },
+        "fromUserName": { "type": "string" },
+        "toStreamerId": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "provider": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "fromUserId", "toStreamerId", "amount"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Profils utilisateurs"
+    },
+    "/streams/{streamId}": {
+      "schema": "Stream",
+      "description": "Sessions de stream"
+    },
+    "/tournaments/{tournamentId}": {
+      "schema": "Tournament",
+      "description": "Tournois organisés"
+    },
+    "/donations/{donationId}": {
+      "schema": "Donation",
+      "description": "Historique des dons"
+    }
+  }
+}
