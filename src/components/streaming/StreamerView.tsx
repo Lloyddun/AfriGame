@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useAgora } from '../../hooks/useAgora';
 import { Play, Square, Radio, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 
 interface StreamerViewProps {
   streamerId: string;
@@ -35,19 +34,12 @@ export const StreamerView: React.FC<StreamerViewProps> = ({ streamerId }) => {
           <h3 className="font-semibold text-lg tracking-tight">Console de Streaming</h3>
         </div>
         
-        <AnimatePresence>
-          {state === 'live' && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full flex items-center gap-2"
-            >
-              <span className="w-2 h-2 bg-white rounded-full animate-ping" />
-              🔴 EN DIRECT
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {state === 'live' && (
+          <div className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full flex items-center gap-2">
+            <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+            🔴 EN DIRECT
+          </div>
+        )}
       </div>
 
       {/* Zone de prévisualisation vidéo */}

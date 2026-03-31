@@ -13,7 +13,8 @@ service cloud.firestore {
     
     function isAdmin() {
       return isAuthenticated() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
          request.auth.token.email == "duncanlloydmouendouessone@gmail.com");
     }
 
@@ -42,7 +43,7 @@ service cloud.firestore {
 
     // Donations
     match /donations/{donationId} {
-      allow read: if isAuthenticated() && 
+      allow read, list: if isAuthenticated() && 
         (resource.data.fromUserId == request.auth.uid || 
          resource.data.toStreamerId == request.auth.uid || 
          isAdmin());

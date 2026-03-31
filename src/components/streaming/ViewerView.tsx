@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useAgora } from '../../hooks/useAgora';
 import { Users, AlertCircle, Eye, Radio } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 
 interface ViewerViewProps {
   streamerId: string;
@@ -50,19 +49,12 @@ export const ViewerView: React.FC<ViewerViewProps> = ({ streamerId }) => {
             <span className="text-sm font-mono font-bold text-[#FFD700]">{viewerCount}</span>
           </div>
           
-          <AnimatePresence>
-            {remoteVideoTrack && (
-              <motion.div 
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                className="px-3 py-1 bg-red-600 text-[10px] font-black rounded-sm flex items-center gap-1.5"
-              >
-                <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                LIVE
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {remoteVideoTrack && (
+            <div className="px-3 py-1 bg-red-600 text-[10px] font-black rounded-sm flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+              LIVE
+            </div>
+          )}
         </div>
       </div>
 

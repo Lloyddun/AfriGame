@@ -15,12 +15,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!auth.currentUser) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
     const donationsRef = collection(db, "donations");
     const q = query(
       donationsRef, 
-      where("toStreamerId", "==", auth.currentUser.uid), 
+      where("toStreamerId", "==", user.uid), 
       orderBy("timestamp", "desc"),
       limit(10)
     );
@@ -36,10 +37,14 @@ export default function Dashboard() {
         return s;
       }));
       setLoading(false);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, "donations"));
+    }, (error) => {
+      console.warn("Permission Firestore refusée pour les dons. Vérifiez vos règles de sécurité.");
+      setLoading(false);
+      // Ne pas appeler handleFirestoreError ici pour éviter de faire planter l'app si l'utilisateur n'est pas admin
+    });
 
     return () => unsub();
-  }, []);
+  }, [auth.currentUser?.uid]);
 
   return (
     <div className="space-y-8">

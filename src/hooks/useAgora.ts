@@ -106,6 +106,8 @@ export const useAgora = (channelName: string | null) => {
       console.error("Erreur lors du démarrage du stream:", err);
       if (err.code === 'PERMISSION_DENIED') {
         setError("Permission de partage d'écran refusée.");
+      } else if (err.message?.includes('dynamic use static key')) {
+        setError("Erreur Agora: Votre projet nécessite un Token. Veuillez désactiver 'App Certificate' dans la console Agora ou configurer un serveur de tokens.");
       } else {
         setError("Impossible de démarrer le stream. Vérifiez votre connexion.");
       }
