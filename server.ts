@@ -14,14 +14,6 @@ async function startServer() {
     res.json({ status: "ok", message: "AfriGame API is running" });
   });
 
-  // Mock Payment Integration Endpoint
-  app.post("/api/payments/mobile-money", (req, res) => {
-    const { amount, currency, provider, phoneNumber } = req.body;
-    console.log(`Processing ${amount} ${currency} via ${provider} for ${phoneNumber}`);
-    // In a real app, integrate with Flutterwave, Paystack, or direct operator APIs
-    res.json({ success: true, transactionId: `TXN-${Date.now()}` });
-  });
-
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
